@@ -49,7 +49,7 @@ var currencyConfigMap = map[string]currencyConfig{
 	},
 }
 
-func newCurrency(isoCode string) *Currency {
+func NewCurrency(isoCode string) *Currency {
 	config, ok := currencyConfigMap[strings.ToLower(isoCode)]
 	if !ok {
 		panic(errors.New("unsupported country code"))
