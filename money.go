@@ -33,9 +33,10 @@ func (m *Money) Subtract(subtracted Money) (*Money, error) {
 	return nil, nil
 }
 
-func (m *Money) Multiply(multiplicand int64) (*Money, error) {
+func (m *Money) Multiply(multiplicand int64) *Money {
 	m.loadConfig()
-	return nil, nil
+	cent := m.Cents * multiplicand
+	return New(cent, m.CurrencyIso)
 }
 
 func (m *Money) Divide(dividend int64) (*Money, error) {
