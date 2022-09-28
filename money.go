@@ -15,6 +15,17 @@ type Money struct {
 	money *gomoney.Money
 }
 
+func New(cents int64, isoCode string) *Money {
+	nm := gomoney.New(cents, isoCode)
+	return &Money{
+		money:          nm,
+		Cents:          cents,
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    isoCode,
+		CurrencySymbol: nm.Currency().Grapheme,
+	}
+}
+
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)
