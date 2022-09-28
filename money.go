@@ -3,7 +3,6 @@ package money
 import (
 	gomoney "github.com/Rhymond/go-money"
 	"math"
-	"math/big"
 )
 
 type Money struct {
@@ -13,18 +12,13 @@ type Money struct {
 	Label          string  `json:"label" bson:"label"`
 	Dollars        float64 `json:"dollars" bson:"dollars"`
 
-	money        *gomoney.Money
-	roundingMode big.RoundingMode
+	money *gomoney.Money
 }
 
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)
 	}
-}
-
-func (m *Money) SetRoundMode(rm big.RoundingMode) {
-	m.roundingMode = rm
 }
 
 // Equals checks equality between two Money types.
