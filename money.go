@@ -1,6 +1,12 @@
 package money
 
-import gomoney "github.com/Rhymond/go-money"
+import (
+	gomoney "github.com/Rhymond/go-money"
+	"math"
+	"math/big"
+)
+
+var roundMode = big.ToNearestEven
 
 type Money struct {
 	Cents          int64   `json:"cents" bson:"cents"`
@@ -12,9 +18,13 @@ type Money struct {
 	money *gomoney.Money
 }
 
+func SetRoundMode(rm big.RoundingMode) {
+	roundMode = rm
+}
+
 func (m *Money) initMoney() {
 	if m.money == nil {
-		gomoney.New(m.Cents, m.CurrencyIso)
+		m.money = gomoney.New(m.Cents, m.CurrencyIso)
 	}
 }
 
@@ -120,10 +130,15 @@ func (m *Money) Subtract(om *Money) (*Money, error) {
 }
 
 // Multiply returns new Money struct with value representing Self multiplied value by multiplier.
-func (m *Money) Multiply(mul int64) *Money {
+func (m *Money) Multiply(mul float64) *Money {
 	m.initMoney()
 
-	nm := m.money.Multiply(mul)
+	cents := m.money.Amount()
+	newCents := float64(cents) * mul
+	// TODO support rounding mode
+	round := math.RoundToEven(newCents)
+
+	nm := gomoney.New(int64(round), m.CurrencyIso)
 
 	return &Money{
 		Cents:          nm.Amount(),
