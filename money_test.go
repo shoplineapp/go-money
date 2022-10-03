@@ -20,4 +20,22 @@ func TestMul(t *testing.T) {
 
 	nm = m.Multiply(2.6)
 	assert.Equal(t, int64(3), nm.Cents)
+
+	nm = m.Multiply(1.1)
+	assert.Equal(t, int64(1), nm.Cents)
+
+	nm = m.Multiply(1.5)
+	assert.Equal(t, int64(2), nm.Cents)
+
+	nm = m.Multiply(1.9)
+	assert.Equal(t, int64(2), nm.Cents)
+
+	nm = m.Multiply(2.1)
+	assert.Equal(t, int64(2), nm.Cents)
+
+	nm = m.Multiply(2.5)
+	assert.Equal(t, int64(2), nm.Cents)
+
+	nm = m.Multiply(2.9)
+	assert.Equal(t, int64(3), nm.Cents)
 }
