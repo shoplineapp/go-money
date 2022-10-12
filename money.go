@@ -1,8 +1,9 @@
 package money
 
 import (
-	gomoney "github.com/Rhymond/go-money"
 	"math"
+
+	gomoney "github.com/Rhymond/go-money"
 )
 
 type Money struct {
@@ -88,13 +89,25 @@ func (m *Money) IsNegative() bool {
 // Absolute returns new Money struct from given Money using absolute monetary value.
 func (m *Money) Absolute() *Money {
 	m.initMoney()
-	return m.Absolute()
+	nm := m.money.Absolute()
+	return &Money{
+		Cents:          nm.Amount(),
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    m.CurrencyIso,
+		CurrencySymbol: m.CurrencySymbol,
+	}
 }
 
 // Negative returns new Money struct from given Money using negative monetary value.
 func (m *Money) Negative() *Money {
 	m.initMoney()
-	return m.Negative()
+	nm := m.money.Negative()
+	return &Money{
+		Cents:          nm.Amount(),
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    m.CurrencyIso,
+		CurrencySymbol: m.CurrencySymbol,
+	}
 }
 
 // Add returns new Money struct with value representing sum of Self and Other Money.
