@@ -111,39 +111,45 @@ func (m *Money) Negative() *Money {
 }
 
 // Add returns new Money struct with value representing sum of Self and Other Money.
-func (m *Money) Add(om *Money) (*Money, error) {
+func (m *Money) Add(oms ...*Money) (*Money, error) {
 	m.initMoney()
-	om.initMoney()
+	var result *Money
+	for _, om := range oms {
+		om.initMoney()
 
-	nm, err := m.money.Add(om.money)
-	if err != nil {
-		return nil, err
+		nm, err := m.money.Add(om.money)
+		if err != nil {
+			return nil, err
+		}
+		result = &Money{
+			Cents:          nm.Amount(),
+			Dollars:        nm.AsMajorUnits(),
+			CurrencyIso:    m.CurrencyIso,
+			CurrencySymbol: m.CurrencySymbol,
+		}
 	}
-
-	return &Money{
-		Cents:          nm.Amount(),
-		Dollars:        nm.AsMajorUnits(),
-		CurrencyIso:    m.CurrencyIso,
-		CurrencySymbol: m.CurrencySymbol,
-	}, nil
+	return result, nil
 }
 
 // Subtract returns new Money struct with value representing difference of Self and Other Money.
-func (m *Money) Subtract(om *Money) (*Money, error) {
+func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 	m.initMoney()
-	om.initMoney()
+	var result *Money
+	for _, om := range oms {
+		om.initMoney()
+		nm, err := m.money.Subtract(om.money)
+		if err != nil {
+			return nil, err
+		}
 
-	nm, err := m.money.Subtract(om.money)
-	if err != nil {
-		return nil, err
+		result = &Money{
+			Cents:          nm.Amount(),
+			Dollars:        nm.AsMajorUnits(),
+			CurrencyIso:    m.CurrencyIso,
+			CurrencySymbol: m.CurrencySymbol,
+		}
 	}
-
-	return &Money{
-		Cents:          nm.Amount(),
-		Dollars:        nm.AsMajorUnits(),
-		CurrencyIso:    m.CurrencyIso,
-		CurrencySymbol: m.CurrencySymbol,
-	}, nil
+	return result, nil
 }
 
 // Multiply returns new Money struct with value representing Self multiplied value by multiplier.
