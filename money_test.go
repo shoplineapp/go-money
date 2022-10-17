@@ -233,7 +233,6 @@ func TestDisplay(t *testing.T) {
 			currency: "IDR",
 			expected: "Rp 1.000,00",
 		},
-
 		{
 			cents:    100000,
 			currency: "VND",
