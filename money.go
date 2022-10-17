@@ -4,6 +4,18 @@ import (
 	"math"
 
 	gomoney "github.com/Rhymond/go-money"
+	"github.com/samber/lo"
+)
+
+func init() {
+	// Need to change Currency TWD Fraction from 2 to 0 in /Rhymond/go-money
+	gomoney.AddCurrency("TWD", "NT$", "$1", ".", ",", 0)
+}
+
+const (
+	RoundUp     = "ROUND_UP"
+	RoundDown   = "ROUND_DOWN"
+	BankerRound = "ROUND_HALF_EVEN"
 )
 
 type Money struct {
@@ -13,10 +25,11 @@ type Money struct {
 	Label          string  `json:"label" bson:"label"`
 	Dollars        float64 `json:"dollars" bson:"dollars"`
 
-	money *gomoney.Money
+	roundingMode string
+	money        *gomoney.Money
 }
 
-func New(cents int64, isoCode string) *Money {
+func New(cents int64, isoCode string, roundingMode string) *Money {
 	nm := gomoney.New(cents, isoCode)
 	return &Money{
 		money:          nm,
@@ -24,13 +37,58 @@ func New(cents int64, isoCode string) *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    isoCode,
 		CurrencySymbol: nm.Currency().Grapheme,
+		roundingMode:   roundingMode,
 	}
+}
+
+// Setting the roundingMode of the money object
+func (m *Money) SetRoundingMode(mode string) {
+	m.roundingMode = mode
+}
+
+// Getting the roundingMode of the money object
+func (m *Money) GetRoundingMode() string {
+	return m.roundingMode
 }
 
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)
 	}
+}
+
+// Getting the roound mode among all Money. If om is not exist, will return the first non-nil round mode. Otherwise will return ""
+func (m *Money) getRoundingModeAmongMoneys(ma []*Money) string {
+	if m.roundingMode != "" {
+		return m.roundingMode
+	}
+	fm, _, isFound := lo.FindIndexOf(ma, func(money *Money) bool {
+		return money.roundingMode != ""
+	})
+	if isFound {
+		return fm.roundingMode
+	}
+	return ""
+
+}
+
+// Rounded function. Default mode will be Banker rounding mode
+func (m *Money) roundingByModeSet(value float64) float64 {
+	switch m.roundingMode {
+	case RoundUp:
+		return math.Ceil(value)
+	case RoundDown:
+		return math.Floor(value)
+	case BankerRound:
+		return math.RoundToEven(value)
+	default:
+		return math.RoundToEven(value)
+
+	}
+}
+
+func (m *Money) Display() string {
+	return m.money.Display()
 }
 
 // Equals checks equality between two Money types.
@@ -95,6 +153,7 @@ func (m *Money) Absolute() *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
+		roundingMode:   m.roundingMode,
 	}
 }
 
@@ -107,17 +166,17 @@ func (m *Money) Negative() *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
+		roundingMode:   m.roundingMode,
 	}
 }
 
 // Add returns new Money struct with value representing sum of Self and Other Money.
 func (m *Money) Add(oms ...*Money) (*Money, error) {
-	m.initMoney()
-	var result *Money
+	result := m
 	for _, om := range oms {
+		result.initMoney()
 		om.initMoney()
-
-		nm, err := m.money.Add(om.money)
+		nm, err := result.money.Add(om.money)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +184,7 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 			Cents:          nm.Amount(),
 			Dollars:        nm.AsMajorUnits(),
 			CurrencyIso:    m.CurrencyIso,
-			CurrencySymbol: m.CurrencySymbol,
+			CurrencySymbol: m.getRoundingModeAmongMoneys(oms),
 		}
 	}
 	return result, nil
@@ -133,11 +192,11 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 
 // Subtract returns new Money struct with value representing difference of Self and Other Money.
 func (m *Money) Subtract(oms ...*Money) (*Money, error) {
-	m.initMoney()
-	var result *Money
+	result := m
 	for _, om := range oms {
+		result.initMoney()
 		om.initMoney()
-		nm, err := m.money.Subtract(om.money)
+		nm, err := result.money.Subtract(om.money)
 		if err != nil {
 			return nil, err
 		}
@@ -147,19 +206,19 @@ func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 			Dollars:        nm.AsMajorUnits(),
 			CurrencyIso:    m.CurrencyIso,
 			CurrencySymbol: m.CurrencySymbol,
+			roundingMode:   m.getRoundingModeAmongMoneys(oms),
 		}
 	}
 	return result, nil
 }
 
-// Multiply returns new Money struct with value representing Self multiplied value by multiplier.
+// Multiply returns new Money struct with value representing Self multiplied value by multiplier. And If no rounding mode is setted, banker rounding mode is used
 func (m *Money) Multiply(mul float64) *Money {
 	m.initMoney()
 
 	cents := m.money.Amount()
 	newCents := float64(cents) * mul
-	// TODO support rounding mode
-	round := math.RoundToEven(newCents)
+	round := m.roundingByModeSet(newCents)
 
 	nm := gomoney.New(int64(round), m.CurrencyIso)
 
@@ -168,5 +227,25 @@ func (m *Money) Multiply(mul float64) *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
+		roundingMode:   m.roundingMode,
+	}
+}
+
+// Divide returns new Money struct with value representing Self divided value by dividsor. And If no rounding mode is setted, banker rounding mode is used
+func (m *Money) Divide(div float64) *Money {
+	m.initMoney()
+
+	cents := m.money.Amount()
+	newCents := float64(cents) / div
+	round := m.roundingByModeSet(newCents)
+
+	nm := gomoney.New(int64(round), m.CurrencyIso)
+
+	return &Money{
+		Cents:          nm.Amount(),
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    m.CurrencyIso,
+		CurrencySymbol: m.CurrencySymbol,
+		roundingMode:   m.roundingMode,
 	}
 }
