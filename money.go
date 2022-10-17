@@ -184,7 +184,8 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 			Cents:          nm.Amount(),
 			Dollars:        nm.AsMajorUnits(),
 			CurrencyIso:    m.CurrencyIso,
-			CurrencySymbol: m.getRoundingModeAmongMoneys(oms),
+			CurrencySymbol: m.CurrencySymbol,
+			roundingMode:   m.getRoundingModeAmongMoneys(oms),
 		}
 	}
 	return result, nil
