@@ -173,6 +173,7 @@ func (m *Money) Negative() *Money {
 // Add returns new Money struct with value representing sum of Self and Other Money.
 func (m *Money) Add(oms ...*Money) (*Money, error) {
 	result := m
+	resultRoundMode := m.getRoundingModeAmongMoneys(oms)
 	for _, om := range oms {
 		result.initMoney()
 		om.initMoney()
@@ -185,15 +186,16 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 			Dollars:        nm.AsMajorUnits(),
 			CurrencyIso:    m.CurrencyIso,
 			CurrencySymbol: m.CurrencySymbol,
-			roundingMode:   m.getRoundingModeAmongMoneys(oms),
 		}
 	}
+	result.roundingMode = resultRoundMode
 	return result, nil
 }
 
 // Subtract returns new Money struct with value representing difference of Self and Other Money.
 func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 	result := m
+	resultRoundMode := m.getRoundingModeAmongMoneys(oms)
 	for _, om := range oms {
 		result.initMoney()
 		om.initMoney()
@@ -201,15 +203,14 @@ func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		result = &Money{
 			Cents:          nm.Amount(),
 			Dollars:        nm.AsMajorUnits(),
 			CurrencyIso:    m.CurrencyIso,
 			CurrencySymbol: m.CurrencySymbol,
-			roundingMode:   m.getRoundingModeAmongMoneys(oms),
 		}
 	}
+	result.roundingMode = resultRoundMode
 	return result, nil
 }
 
