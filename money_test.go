@@ -9,7 +9,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	m := New(100, "TWD", RoundUp)
+	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, int64(100), m.Cents)
 	assert.Equal(t, RoundUp, m.GetRoundingMode())
 	assert.Equal(t, float64(100), m.Dollars)
@@ -18,24 +18,24 @@ func TestNew(t *testing.T) {
 }
 
 func TestSetRoundingMode(t *testing.T) {
-	m := New(100, "TWD", RoundUp)
+	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	m.SetRoundingMode(RoundDown)
 	assert.Equal(t, RoundDown, m.roundingMode)
 }
 
 func TestGetRoundingMode(t *testing.T) {
-	m := New(100, "TWD", RoundUp)
+	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	m.GetRoundingMode()
 	assert.Equal(t, RoundUp, m.roundingMode)
 }
 
 func TestInitMoney(t *testing.T) {
-	m := New(100, "TWD", RoundUp)
+	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	m.initMoney()
 	assert.Equal(t, "TWD", m.money.Currency().Code)
 }
 
-func TestGetRoundingModeAmongMoneys(t *testing.T) {
+func TestAlignRoundingMode(t *testing.T) {
 	testTable := []struct {
 		mainMoneyRoundingMode  string
 		paramMoneyRoundingMode []string
@@ -54,21 +54,21 @@ func TestGetRoundingModeAmongMoneys(t *testing.T) {
 		{
 			mainMoneyRoundingMode:  "",
 			paramMoneyRoundingMode: []string{"", "", ""},
-			expected:               "",
+			expected:               RoundBankers,
 		},
 	}
 	for _, item := range testTable {
-		m := New(1, "TWD", item.mainMoneyRoundingMode)
+		m := New(1, "TWD", WithRoundingMode(item.mainMoneyRoundingMode))
 		ma := lo.Map(item.paramMoneyRoundingMode, func(roundMode string, _ int) *Money {
-			return New(1, "TWD", roundMode)
+			return New(1, "TWD", WithRoundingMode(roundMode))
 		})
-		result := m.getRoundingModeAmongMoneys(ma)
-		assert.Equal(t, item.expected, result)
+		result := New(1, "TWD", alignRoundingMode(m, ma))
+		assert.Equal(t, item.expected, result.GetRoundingMode())
 	}
 
 }
 
-func TestRoundByModeSet(t *testing.T) {
+func TestRoundByMode(t *testing.T) {
 	testTable := []struct {
 		roundingMode string
 		inputValue   float64
@@ -95,49 +95,49 @@ func TestRoundByModeSet(t *testing.T) {
 			expected:     math.Floor(1.4),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   1.5,
 			expected:     math.RoundToEven(1.5),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   1.4,
 			expected:     math.RoundToEven(1.4),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   2.5,
 			expected:     math.RoundToEven(2.5),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   2.4,
 			expected:     math.RoundToEven(2.4),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   1.5,
 			expected:     math.RoundToEven(1.5),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   1.4,
 			expected:     math.RoundToEven(1.4),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   2.5,
 			expected:     math.RoundToEven(2.5),
 		},
 		{
-			roundingMode: BankerRound,
+			roundingMode: RoundBankers,
 			inputValue:   2.4,
 			expected:     math.RoundToEven(2.4),
 		},
 	}
 	for _, item := range testTable {
-		rd := New(1, "TWD", item.roundingMode)
-		assert.Equal(t, item.expected, rd.roundingByModeSet(item.inputValue))
+		rd := New(1, "TWD", WithRoundingMode(item.roundingMode))
+		assert.Equal(t, item.expected, rd.RoundByMode(item.inputValue))
 	}
 
 }
@@ -149,30 +149,111 @@ func TestDisplay(t *testing.T) {
 		expected string
 	}{
 		{
-			cents:    100,
-			currency: "TWD",
-			expected: "NT$100",
-		},
-		{
-			cents:    100,
+			cents:    100000,
 			currency: "HKD",
-			expected: "$1.00",
+			expected: "$1,000.00",
 		},
 		{
-			cents:    100,
+			cents:    100000,
+			currency: "CNY",
+			expected: "¥1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "TWD",
+			expected: "NT$100,000",
+		},
+		{
+			cents:    100000,
 			currency: "USD",
-			expected: "$1.00",
+			expected: "$1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "SGD",
+			expected: "$1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "EUR",
+			expected: "€1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "AUD",
+			expected: "$1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "GBP",
+			expected: "£1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "PHP",
+			expected: "₱1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "MYR",
+			expected: "RM1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "THB",
+			expected: "1,000.00 ฿",
+		},
+		{
+			cents:    100000,
+			currency: "AED",
+			expected: "1,000.00د.إ",
+		},
+		{
+			cents:    100000,
+			currency: "JPY",
+			expected: "¥100,000",
+		},
+		{
+			cents:    100000,
+			currency: "MMK",
+			expected: "K1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "BND",
+			expected: "$1,000.00",
+		},
+		{
+			cents:    100000,
+			currency: "KRW",
+			expected: "₩100,000",
+		},
+		{
+			cents:    100000,
+			currency: "IDR",
+			expected: "Rp 1.000,00",
+		},
+
+		{
+			cents:    100000,
+			currency: "VND",
+			expected: "100,000 ₫",
+		},
+		{
+			cents:    100000,
+			currency: "CAD",
+			expected: "$1,000.00",
 		},
 	}
 	for _, item := range testTable {
-		m := New(item.cents, item.currency, RoundDown)
+		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
 		nm := m.Display()
-		assert.Equal(t, item.expected, nm)
+		assert.Equal(t, item.expected, nm, item.currency)
 	}
 }
 
-func TestEqual_SameCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
+func TestEqual_SameCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
 	testTable := []struct {
 		cents    float64
 		currency string
@@ -195,7 +276,7 @@ func TestEqual_SameCurrenties(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m2 := New(int64(item.cents), item.currency, RoundDown)
+		m2 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm, err := m1.Equals(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm)
@@ -203,17 +284,17 @@ func TestEqual_SameCurrenties(t *testing.T) {
 	}
 }
 
-func TestEqual_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestEqual_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.Equals(m2)
 	assert.Error(t, err)
 	assert.Equal(t, false, nm)
 	assert.Equal(t, "currencies don't match", err.Error())
 }
 
-func TestGreaterThan_SameCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
+func TestGreaterThan_SameCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
 	testTable := []struct {
 		cents    float64
 		currency string
@@ -236,7 +317,7 @@ func TestGreaterThan_SameCurrenties(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m2 := New(int64(item.cents), item.currency, RoundDown)
+		m2 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm, err := m1.GreaterThan(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm)
@@ -244,17 +325,17 @@ func TestGreaterThan_SameCurrenties(t *testing.T) {
 	}
 }
 
-func TestGreaterThan_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestGreaterThan_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.GreaterThan(m2)
 	assert.Error(t, err, err)
 	assert.Equal(t, false, nm)
 	assert.Equal(t, "currencies don't match", err.Error())
 }
 
-func TestGreaterThanOrEqual_SameCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
+func TestGreaterThanOrEqual_SameCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
 	testTable := []struct {
 		cents    float64
 		currency string
@@ -277,7 +358,7 @@ func TestGreaterThanOrEqual_SameCurrenties(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m2 := New(int64(item.cents), item.currency, RoundDown)
+		m2 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm, err := m1.GreaterThanOrEqual(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm)
@@ -285,17 +366,17 @@ func TestGreaterThanOrEqual_SameCurrenties(t *testing.T) {
 	}
 }
 
-func TestGreaterThanOrEqual_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestGreaterThanOrEqual_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.GreaterThanOrEqual(m2)
 	assert.Error(t, err, err)
 	assert.Equal(t, false, nm)
 	assert.Equal(t, "currencies don't match", err.Error())
 }
 
-func TestLessThan_SameCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
+func TestLessThan_SameCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
 	testTable := []struct {
 		cents    float64
 		currency string
@@ -318,7 +399,7 @@ func TestLessThan_SameCurrenties(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m2 := New(int64(item.cents), item.currency, RoundDown)
+		m2 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm, err := m1.LessThan(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm)
@@ -326,17 +407,17 @@ func TestLessThan_SameCurrenties(t *testing.T) {
 	}
 }
 
-func TestLessThan_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestLessThan_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.LessThan(m2)
 	assert.Error(t, err, err)
 	assert.Equal(t, false, nm)
 	assert.Equal(t, "currencies don't match", err.Error())
 }
 
-func TestLessThanOrEqual_SameCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
+func TestLessThanOrEqual_SameCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
 	testTable := []struct {
 		cents    float64
 		currency string
@@ -359,7 +440,7 @@ func TestLessThanOrEqual_SameCurrenties(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m2 := New(int64(item.cents), item.currency, RoundDown)
+		m2 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm, err := m1.LessThanOrEqual(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm)
@@ -367,9 +448,9 @@ func TestLessThanOrEqual_SameCurrenties(t *testing.T) {
 	}
 }
 
-func TestLessThanOrEqual_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestLessThanOrEqual_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.LessThanOrEqual(m2)
 	assert.Error(t, err, err)
 	assert.Equal(t, false, nm)
@@ -399,7 +480,7 @@ func TestIsZero(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents), item.currency, RoundDown)
+		m1 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm := m1.IsZero()
 		assert.Equal(t, item.expected, nm)
 	}
@@ -428,7 +509,7 @@ func TestIsNegative(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents), item.currency, RoundDown)
+		m1 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm := m1.IsNegative()
 		assert.Equal(t, item.expected, nm)
 	}
@@ -457,7 +538,7 @@ func TestIsPositive(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents), item.currency, RoundDown)
+		m1 := New(int64(item.cents), item.currency, WithRoundingMode(RoundDown))
 		nm := m1.IsPositive()
 		assert.Equal(t, item.expected, nm)
 	}
@@ -482,7 +563,7 @@ func TestAbsolute(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents), "TWD", RoundDown)
+		m1 := New(int64(item.cents), "TWD", WithRoundingMode(RoundDown))
 		nm := m1.Absolute()
 		assert.Equal(t, item.expected, nm.Cents)
 	}
@@ -507,7 +588,7 @@ func TestNegative(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents), "TWD", RoundDown)
+		m1 := New(int64(item.cents), "TWD", WithRoundingMode(RoundDown))
 		nm := m1.Negative()
 		assert.Equal(t, item.expected, nm.Cents)
 	}
@@ -542,8 +623,8 @@ func TestAdd_SingleValue(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents1), "TWD", RoundDown)
-		m2 := New(int64(item.cents2), "TWD", RoundDown)
+		m1 := New(int64(item.cents1), "TWD", WithRoundingMode(RoundDown))
+		m2 := New(int64(item.cents2), "TWD", WithRoundingMode(RoundDown))
 		nm, err := m1.Add(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm.Cents)
@@ -570,10 +651,10 @@ func TestAdd_MultiValue(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(0), "TWD", RoundDown)
+		m1 := New(int64(0), "TWD", WithRoundingMode(RoundDown))
 		// nm, err := m1.Add(m2)
 		moneys := lo.Map(item.centsArray, func(cents int64, _ int) *Money {
-			return New(cents, "TWD", RoundDown)
+			return New(cents, "TWD", WithRoundingMode(RoundDown))
 		})
 		nm, err := m1.Add(moneys...)
 		assert.NoError(t, err)
@@ -581,9 +662,9 @@ func TestAdd_MultiValue(t *testing.T) {
 	}
 }
 
-func TestAdd_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestAdd_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.Add(m2)
 	assert.Error(t, err)
 	assert.Nil(t, nm)
@@ -619,8 +700,8 @@ func TestSubtract_SingleValue(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(item.cents1), "TWD", RoundDown)
-		m2 := New(int64(item.cents2), "TWD", RoundDown)
+		m1 := New(int64(item.cents1), "TWD", WithRoundingMode(RoundDown))
+		m2 := New(int64(item.cents2), "TWD", WithRoundingMode(RoundDown))
 		nm, err := m1.Subtract(m2)
 		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm.Cents)
@@ -647,9 +728,9 @@ func TestSubtract_MultiValue(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(int64(10), "TWD", RoundDown)
+		m1 := New(int64(10), "TWD", WithRoundingMode(RoundDown))
 		moneys := lo.Map(item.centsArray, func(cents int64, _ int) *Money {
-			return New(cents, "TWD", RoundDown)
+			return New(cents, "TWD", WithRoundingMode(RoundDown))
 		})
 		nm, err := m1.Subtract(moneys...)
 		assert.NoError(t, err)
@@ -657,9 +738,9 @@ func TestSubtract_MultiValue(t *testing.T) {
 	}
 }
 
-func TestSubtract_DifferentCurrenties(t *testing.T) {
-	m1 := New(0, "TWD", RoundDown)
-	m2 := New(0, "USD", RoundDown)
+func TestSubtract_DifferentCurrencies(t *testing.T) {
+	m1 := New(0, "TWD", WithRoundingMode(RoundDown))
+	m2 := New(0, "USD", WithRoundingMode(RoundDown))
 	nm, err := m1.Subtract(m2)
 	assert.Error(t, err)
 	assert.Nil(t, nm)
@@ -684,7 +765,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 0.4,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   0,
 		},
 		{
@@ -704,7 +785,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 0.5,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   0,
 		},
 		{
@@ -724,7 +805,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 0.6,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   1,
 		},
 		{
@@ -744,7 +825,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 1.4,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   1,
 		},
 		{
@@ -764,7 +845,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 1.5,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   2,
 		},
 		{
@@ -784,7 +865,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 1.6,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   2,
 		},
 		{
@@ -804,7 +885,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 2.4,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   2,
 		},
 		{
@@ -824,7 +905,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 2.5,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   2,
 		},
 		{
@@ -844,7 +925,7 @@ func TestMultiply(t *testing.T) {
 		},
 		{
 			multiplier: 2.6,
-			roundMode:  BankerRound,
+			roundMode:  RoundBankers,
 			expected:   3,
 		},
 		{
@@ -854,7 +935,7 @@ func TestMultiply(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m := New(int64(1), "HKD", item.roundMode)
+		m := New(int64(1), "HKD", WithRoundingMode(item.roundMode))
 		nm := m.Multiply(item.multiplier)
 		assert.Equal(t, item.expected, nm.Cents)
 	}
@@ -878,7 +959,7 @@ func TestDivide(t *testing.T) {
 		},
 		{
 			dividend:  4,
-			roundMode: BankerRound,
+			roundMode: RoundBankers,
 			expected:  0,
 		},
 		{
@@ -898,7 +979,7 @@ func TestDivide(t *testing.T) {
 		},
 		{
 			dividend:  5,
-			roundMode: BankerRound,
+			roundMode: RoundBankers,
 			expected:  0,
 		},
 		{
@@ -918,7 +999,7 @@ func TestDivide(t *testing.T) {
 		},
 		{
 			dividend:  6,
-			roundMode: BankerRound,
+			roundMode: RoundBankers,
 			expected:  1,
 		},
 		{
@@ -928,7 +1009,7 @@ func TestDivide(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m := New(int64(item.dividend), "HKD", item.roundMode)
+		m := New(int64(item.dividend), "HKD", WithRoundingMode(item.roundMode))
 		nm := m.Divide(10)
 		assert.Equal(t, item.expected, nm.Cents)
 	}
