@@ -27,6 +27,17 @@ func New(cents int64, isoCode string) *Money {
 	}
 }
 
+func NewFromAmount(amount float64, isoCode string) *Money {
+	nm := gomoney.NewFromFloat(amount, isoCode)
+	return &Money{
+		money:          nm,
+		Cents:          cents,
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    isoCode,
+		CurrencySymbol: nm.Currency().Grapheme,
+	}
+}
+
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)
