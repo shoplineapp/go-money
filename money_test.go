@@ -5,6 +5,14 @@ import (
 	"testing"
 )
 
+func TestFromAmount(t *testing.T) {
+	twdM := NewFromAmount(100, "HKD")
+	assert.Equal(t, int64(10000), twdM.Cents)
+
+	jpyM := NewFromAmount(100, "JPY")
+	assert.Equal(t, int64(100), jpyM.Cents)
+}
+
 func TestMul(t *testing.T) {
 
 	m := Money{

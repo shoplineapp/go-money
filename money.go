@@ -31,7 +31,7 @@ func NewFromAmount(amount float64, isoCode string) *Money {
 	nm := gomoney.NewFromFloat(amount, isoCode)
 	return &Money{
 		money:          nm,
-		Cents:          cents,
+		Cents:          nm.Amount(),
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    isoCode,
 		CurrencySymbol: nm.Currency().Grapheme,
