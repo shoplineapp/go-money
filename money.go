@@ -27,8 +27,8 @@ func New(cents int64, isoCode string) *Money {
 	}
 }
 
-func NewFromAmount(amount float64, isoCode string) *Money {
-	nm := gomoney.NewFromFloat(amount, isoCode)
+func NewFromAmount(dollars float64, isoCode string) *Money {
+	nm := gomoney.NewFromFloat(dollars, isoCode)
 	return &Money{
 		money:          nm,
 		Cents:          nm.Amount(),
