@@ -65,6 +65,17 @@ func (m *Money) GetRoundingMode() string {
 	return m.roundingMode
 }
 
+func NewFromAmount(dollars float64, isoCode string) *Money {
+	nm := gomoney.NewFromFloat(dollars, isoCode)
+	return &Money{
+		money:          nm,
+		Cents:          nm.Amount(),
+		Dollars:        nm.AsMajorUnits(),
+		CurrencyIso:    isoCode,
+		CurrencySymbol: nm.Currency().Grapheme,
+	}
+}
+
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)

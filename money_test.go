@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+
 func TestNew(t *testing.T) {
 	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, int64(100), m.Cents)
@@ -16,6 +17,14 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "TWD", m.CurrencyIso)
 	assert.Equal(t, "NT$", m.CurrencySymbol)
 	assert.Equal(t, "NT$100", m.Label)
+}
+
+func TestFromAmount(t *testing.T) {
+	twdM := NewFromAmount(100, "HKD")
+	assert.Equal(t, int64(10000), twdM.Cents)
+
+	jpyM := NewFromAmount(100, "JPY")
+	assert.Equal(t, int64(100), jpyM.Cents)
 }
 
 func TestSetRoundingMode(t *testing.T) {
