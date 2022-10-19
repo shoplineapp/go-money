@@ -15,6 +15,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, float64(100), m.Dollars)
 	assert.Equal(t, "TWD", m.CurrencyIso)
 	assert.Equal(t, "NT$", m.CurrencySymbol)
+	assert.Equal(t, "NT$100", m.Label)
 }
 
 func TestSetRoundingMode(t *testing.T) {
@@ -940,7 +941,7 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
-func TestDivide(t *testing.T) {
+func TestDivide_NoError(t *testing.T) {
 	testTable := []struct {
 		dividend  float64
 		roundMode string
@@ -1009,7 +1010,15 @@ func TestDivide(t *testing.T) {
 	}
 	for _, item := range testTable {
 		m := New(int64(item.dividend), "HKD", WithRoundingMode(item.roundMode))
-		nm := m.Divide(10)
+		nm, err := m.Divide(10)
+		assert.NoError(t, err)
 		assert.Equal(t, item.expected, nm.Cents)
 	}
+}
+
+func TestDivide_WithError(t *testing.T) {
+	m := New(int64(1), "HKD", WithRoundingMode(RoundUp))
+	_, err := m.Divide(0)
+	assert.Error(t, err)
+	assert.ErrorIs(t, ErrorDivideByZero, err)
 }

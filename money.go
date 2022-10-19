@@ -1,6 +1,7 @@
 package money
 
 import (
+	"errors"
 	"math"
 
 	gomoney "github.com/Rhymond/go-money"
@@ -11,6 +12,11 @@ const (
 	RoundUp      = "ROUND_UP"
 	RoundDown    = "ROUND_DOWN"
 	RoundBankers = "ROUND_BANKERS"
+)
+
+var (
+	// Error
+	ErrorDivideByZero = errors.New("invalid operation: division by zero")
 )
 
 type Money struct {
@@ -40,6 +46,7 @@ func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    isoCode,
 		CurrencySymbol: nm.Currency().Grapheme,
+		Label:          nm.Display(),
 		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers
 	}
 	for _, option := range options {
@@ -160,6 +167,7 @@ func (m *Money) Absolute() *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
+		Label:          nm.Display(),
 		roundingMode:   m.roundingMode,
 	}
 }
@@ -173,6 +181,7 @@ func (m *Money) Negative() *Money {
 		Dollars:        nm.AsMajorUnits(),
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
+		Label:          nm.Display(),
 		roundingMode:   m.roundingMode,
 	}
 }
@@ -228,7 +237,10 @@ func (m *Money) Multiply(mul float64) *Money {
 }
 
 // Divide returns new Money struct with value representing Self divided value by dividsor. And If no rounding mode is setted, banker rounding mode is used
-func (m *Money) Divide(div float64) *Money {
+func (m *Money) Divide(div float64) (*Money, error) {
+	if div == 0 {
+		return nil, ErrorDivideByZero
+	}
 	m.initMoney()
 
 	cents := m.money.Amount()
@@ -243,5 +255,5 @@ func (m *Money) Divide(div float64) *Money {
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
 		roundingMode:   m.roundingMode,
-	}
+	}, nil
 }

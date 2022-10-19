@@ -7,6 +7,7 @@ import (
 func init() {
 	// Need to change Currency TWD Fraction from 2 to 0 in /Rhymond/go-money
 	gomoney.AddCurrency("HKD", "$", "$1", ".", ",", 2)
+	gomoney.AddCurrency("HKD", "$", "$1", ".", ",", 2)
 	gomoney.AddCurrency("CNY", "\u00a5", "$1", ".", ",", 2)
 	gomoney.AddCurrency("TWD", "NT$", "$1", ".", ",", 0)
 	gomoney.AddCurrency("USD", "$", "$1", ".", ",", 2)
