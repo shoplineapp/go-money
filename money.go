@@ -40,11 +40,20 @@ func WithRoundingMode(mode string) MoneyOption {
 
 func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 	nm := gomoney.New(cents, isoCode)
+	return newFromGoMoney(nm, options...)
+}
+
+func NewFromAmount(dollars float64, isoCode string, options ...MoneyOption) *Money {
+	nm := gomoney.NewFromFloat(dollars, isoCode)
+	return newFromGoMoney(nm, options...)
+}
+
+func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
 	money := &Money{
 		money:          nm,
-		Cents:          cents,
+		Cents:          nm.Amount(),
 		Dollars:        nm.AsMajorUnits(),
-		CurrencyIso:    isoCode,
+		CurrencyIso:    nm.Currency().Code,
 		CurrencySymbol: nm.Currency().Grapheme,
 		Label:          nm.Display(),
 		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers
@@ -63,17 +72,6 @@ func (m *Money) SetRoundingMode(mode string) {
 // Getting the roundingMode of the money object
 func (m *Money) GetRoundingMode() string {
 	return m.roundingMode
-}
-
-func NewFromAmount(dollars float64, isoCode string) *Money {
-	nm := gomoney.NewFromFloat(dollars, isoCode)
-	return &Money{
-		money:          nm,
-		Cents:          nm.Amount(),
-		Dollars:        nm.AsMajorUnits(),
-		CurrencyIso:    isoCode,
-		CurrencySymbol: nm.Currency().Grapheme,
-	}
 }
 
 func (m *Money) initMoney() {

@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestNew(t *testing.T) {
 	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, int64(100), m.Cents)
@@ -20,11 +19,21 @@ func TestNew(t *testing.T) {
 }
 
 func TestFromAmount(t *testing.T) {
-	twdM := NewFromAmount(100, "HKD")
-	assert.Equal(t, int64(10000), twdM.Cents)
+	// With Default
+	hkdM := NewFromAmount(100, "HKD")
+	assert.Equal(t, int64(10000), hkdM.Cents)
+	assert.Equal(t, RoundBankers, hkdM.GetRoundingMode())
+	assert.Equal(t, "HKD", hkdM.CurrencyIso)
+	assert.Equal(t, "$", hkdM.CurrencySymbol)
+	assert.Equal(t, "$100.00", hkdM.Label)
 
 	jpyM := NewFromAmount(100, "JPY")
 	assert.Equal(t, int64(100), jpyM.Cents)
+
+	// With rounding mode
+	m := NewFromAmount(100, "TWD", WithRoundingMode(RoundUp))
+	assert.Equal(t, int64(100), m.Cents)
+	assert.Equal(t, RoundUp, m.GetRoundingMode())
 }
 
 func TestSetRoundingMode(t *testing.T) {
