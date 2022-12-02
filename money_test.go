@@ -31,9 +31,17 @@ func TestFromAmount(t *testing.T) {
 	assert.Equal(t, int64(100), jpyM.Cents)
 
 	// With rounding mode
-	m := NewFromAmount(100, "TWD", WithRoundingMode(RoundUp))
-	assert.Equal(t, int64(100), m.Cents)
-	assert.Equal(t, RoundUp, m.GetRoundingMode())
+	usdM := NewFromAmount(28.55, "USD", WithRoundingMode(RoundUp))
+	assert.Equal(t, int64(2855), usdM.Cents)
+	assert.Equal(t, 28.55, usdM.Dollars)
+	assert.Equal(t, RoundUp, usdM.GetRoundingMode())
+	assert.Equal(t, "$28.55", usdM.Label)
+
+	twdM := NewFromAmount(28.55, "TWD", WithRoundingMode(RoundUp))
+	assert.Equal(t, int64(29), twdM.Cents)
+	assert.Equal(t, float64(29), twdM.Dollars)
+	assert.Equal(t, RoundUp, twdM.GetRoundingMode())
+	assert.Equal(t, "NT$29", twdM.Label)
 }
 
 func TestSetRoundingMode(t *testing.T) {
