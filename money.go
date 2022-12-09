@@ -44,7 +44,12 @@ func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 }
 
 func NewFromAmount(dollars float64, isoCode string, options ...MoneyOption) *Money {
-	nm := gomoney.NewFromFloat(dollars, isoCode)
+	currencyDecimals := math.Pow10(gomoney.GetCurrency(isoCode).Fraction)
+	cents := dollars * currencyDecimals
+
+	// Temp money object without value
+	money := newFromGoMoney(gomoney.New(0, isoCode), options...)
+	nm := gomoney.New(int64(money.Round(cents)), isoCode)
 	return newFromGoMoney(nm, options...)
 }
 
@@ -92,21 +97,28 @@ func alignRoundingMode(m *Money, ma []*Money) MoneyOption {
 		return WithRoundingMode(fm.roundingMode)
 	}
 	return WithRoundingMode(RoundBankers)
-
 }
 
-// Rounded function. Default mode will be Banker rounding mode
-func (m *Money) RoundByMode(value float64) float64 {
-	switch m.roundingMode {
-	case RoundUp:
-		return math.Ceil(value)
-	case RoundDown:
-		return math.Floor(value)
-	case RoundBankers:
-		return math.RoundToEven(value)
-	default:
-		return math.RoundToEven(value)
+// Round money with rounding mode set
+func (m *Money) Round(value float64) float64 {
+	return roundCentsWithExplicitMode(value, m.roundingMode)
+}
 
+// DEPRECATED: Use Round instead. There is no option not to round by mode
+func (m *Money) RoundByMode(value float64) float64 {
+	return roundCentsWithExplicitMode(value, m.roundingMode)
+}
+
+func roundCentsWithExplicitMode(cents float64, mode string) float64 {
+	switch mode {
+	case RoundUp:
+		return math.Ceil(cents)
+	case RoundDown:
+		return math.Floor(cents)
+	case RoundBankers:
+		return math.RoundToEven(cents)
+	default:
+		return math.RoundToEven(cents)
 	}
 }
 
