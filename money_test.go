@@ -176,11 +176,6 @@ func TestDisplay(t *testing.T) {
 		expected string
 	}{
 		{
-			cents:    0,
-			currency: "HKD",
-			expected: "HK$1,000.00",
-		},
-		{
 			cents:    100000,
 			currency: "HKD",
 			expected: "HK$1,000.00",
@@ -280,6 +275,35 @@ func TestDisplay(t *testing.T) {
 		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
 		nm := m.Display()
 		assert.Equal(t, item.expected, nm, item.currency)
+	}
+}
+
+func TestDisplay_v2(t *testing.T) {
+	testTable := []struct {
+		cents                   int64
+		currency                string
+		expected_showZero_true  string
+		expected_showZero_false string
+	}{
+		{
+			cents:                   0,
+			currency:                "HKD",
+			expected_showZero_true:  "HK$0.00",
+			expected_showZero_false: "",
+		},
+		{
+			cents:                   10000,
+			currency:                "CAD",
+			expected_showZero_true:  "C$100.00",
+			expected_showZero_false: "C$100.00",
+		},
+	}
+	for _, item := range testTable {
+		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
+		nm1 := m.Display_v2(true)
+		nm2 := m.Display_v2(false)
+		assert.Equal(t, item.expected_showZero_true, nm1, item.currency)
+		assert.Equal(t, item.expected_showZero_false, nm2, item.currency)
 	}
 }
 

@@ -126,11 +126,13 @@ func (m *Money) Display() string {
 	return m.money.Display()
 }
 
+// New Display function for supporting show zero; if true, show zero otherwise return ""
 func (m *Money) Display_v2(showZero bool) string {
-	if showZero {
-		return m.money.Display()
+	if m.money.IsZero() && !showZero {
+		return ""
 	}
-	return ""
+	return m.money.Display()
+
 }
 
 // Equals checks equality between two Money types.
