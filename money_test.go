@@ -176,6 +176,11 @@ func TestDisplay(t *testing.T) {
 		expected string
 	}{
 		{
+			cents:    0,
+			currency: "HKD",
+			expected: "HK$1,000.00",
+		},
+		{
 			cents:    100000,
 			currency: "HKD",
 			expected: "HK$1,000.00",

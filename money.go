@@ -126,6 +126,13 @@ func (m *Money) Display() string {
 	return m.money.Display()
 }
 
+func (m *Money) Display_v2(showZero bool) string {
+	if showZero {
+		return m.money.Display()
+	}
+	return ""
+}
+
 // Equals checks equality between two Money types.
 func (m *Money) Equals(om *Money) (bool, error) {
 	m.initMoney()
