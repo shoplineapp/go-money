@@ -24,8 +24,8 @@ func TestFromAmount(t *testing.T) {
 	assert.Equal(t, int64(10000), hkdM.Cents)
 	assert.Equal(t, RoundBankers, hkdM.GetRoundingMode())
 	assert.Equal(t, "HKD", hkdM.CurrencyIso)
-	assert.Equal(t, "$", hkdM.CurrencySymbol)
-	assert.Equal(t, "$100.00", hkdM.Label)
+	assert.Equal(t, "HK$", hkdM.CurrencySymbol)
+	assert.Equal(t, "HK$100.00", hkdM.Label)
 
 	jpyM := NewFromAmount(100, "JPY")
 	assert.Equal(t, int64(100), jpyM.Cents)
@@ -35,7 +35,7 @@ func TestFromAmount(t *testing.T) {
 	assert.Equal(t, int64(2855), usdM.Cents)
 	assert.Equal(t, 28.55, usdM.Dollars)
 	assert.Equal(t, RoundUp, usdM.GetRoundingMode())
-	assert.Equal(t, "$28.55", usdM.Label)
+	assert.Equal(t, "US$28.55", usdM.Label)
 
 	twdM := NewFromAmount(28.55, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, int64(29), twdM.Cents)
@@ -52,8 +52,7 @@ func TestSetRoundingMode(t *testing.T) {
 
 func TestGetRoundingMode(t *testing.T) {
 	m := New(100, "TWD", WithRoundingMode(RoundUp))
-	m.GetRoundingMode()
-	assert.Equal(t, RoundUp, m.roundingMode)
+	assert.Equal(t, RoundUp, m.GetRoundingMode())
 }
 
 func TestInitMoney(t *testing.T) {
@@ -178,12 +177,12 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "HKD",
-			expected: "$1,000.00",
+			expected: "HK$1,000.00",
 		},
 		{
 			cents:    100000,
 			currency: "CNY",
-			expected: "¥1,000.00",
+			expected: "CN¥1,000.00",
 		},
 		{
 			cents:    100000,
@@ -193,12 +192,12 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "USD",
-			expected: "$1,000.00",
+			expected: "US$1,000.00",
 		},
 		{
 			cents:    100000,
 			currency: "SGD",
-			expected: "$1,000.00",
+			expected: "S$1,000.00",
 		},
 		{
 			cents:    100000,
@@ -208,7 +207,7 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "AUD",
-			expected: "$1,000.00",
+			expected: "A$1,000.00",
 		},
 		{
 			cents:    100000,
@@ -218,7 +217,7 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "PHP",
-			expected: "₱1,000.00",
+			expected: "PHP1,000.00",
 		},
 		{
 			cents:    100000,
@@ -233,12 +232,12 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "AED",
-			expected: "1,000.00د.إ",
+			expected: "1,000.00DH",
 		},
 		{
 			cents:    100000,
 			currency: "JPY",
-			expected: "¥100,000",
+			expected: "円100,000",
 		},
 		{
 			cents:    100000,
@@ -248,7 +247,7 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "BND",
-			expected: "$1,000.00",
+			expected: "B$1,000.00",
 		},
 		{
 			cents:    100000,
@@ -268,13 +267,45 @@ func TestDisplay(t *testing.T) {
 		{
 			cents:    100000,
 			currency: "CAD",
-			expected: "$1,000.00",
+			expected: "C$1,000.00",
 		},
 	}
 	for _, item := range testTable {
 		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
 		nm := m.Display()
 		assert.Equal(t, item.expected, nm, item.currency)
+	}
+}
+
+func TestDisplay_WithShowZero(t *testing.T) {
+	testTable := []struct {
+		cents                   int64
+		currency                string
+		expected_showZero_true  string
+		expected_showZero_false string
+	}{
+		{
+			cents:                   0,
+			currency:                "HKD",
+			expected_showZero_true:  "HK$0.00",
+			expected_showZero_false: "",
+		},
+		{
+			cents:                   10000,
+			currency:                "CAD",
+			expected_showZero_true:  "C$100.00",
+			expected_showZero_false: "C$100.00",
+		},
+	}
+	for _, item := range testTable {
+		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
+
+		nm1 := m.Display()
+		nm2 := m.Display(func(opts *DisplayOptions) { opts.ShowZero = false })
+		nm3 := m.Display(func(opts *DisplayOptions) { opts.ShowZero = true })
+		assert.Equal(t, item.expected_showZero_true, nm1, item.currency)
+		assert.Equal(t, item.expected_showZero_false, nm2, item.currency)
+		assert.Equal(t, item.expected_showZero_true, nm3, item.currency)
 	}
 }
 

@@ -30,6 +30,10 @@ type Money struct {
 	money        *gomoney.Money
 }
 
+type DisplayOptions struct {
+	ShowZero bool
+}
+
 type MoneyOption func(*Money)
 
 func WithRoundingMode(mode string) MoneyOption {
@@ -37,6 +41,8 @@ func WithRoundingMode(mode string) MoneyOption {
 		m.roundingMode = mode
 	}
 }
+
+type DisplayOption func(*DisplayOptions)
 
 func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 	nm := gomoney.New(cents, isoCode)
@@ -122,7 +128,16 @@ func roundCentsWithExplicitMode(cents float64, mode string) float64 {
 	}
 }
 
-func (m *Money) Display() string {
+func (m *Money) Display(overrides ...DisplayOption) string {
+	opts := &DisplayOptions{
+		ShowZero: true,
+	}
+	for _, override := range overrides {
+		override(opts)
+	}
+	if m.money.IsZero() && !opts.ShowZero {
+		return ""
+	}
 	return m.money.Display()
 }
 
@@ -208,6 +223,8 @@ func (m *Money) Negative() *Money {
 }
 
 // Add returns new Money struct with value representing sum of Self and Other Money.
+// For the logic of attribute "roundingMode", please refer to function alignRoundingMode
+// For the logic of attribute showZero, if will just following the setting of m
 func (m *Money) Add(oms ...*Money) (*Money, error) {
 	m.initMoney()
 	innerMoney := m.money
@@ -224,6 +241,8 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 }
 
 // Subtract returns new Money struct with value representing difference of Self and Other Money.
+// For the logic of attribute "roundingMode", please refer to function alignRoundingMode
+// For the logic of attribute showZero, if will just following the setting of m
 func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 	m.initMoney()
 	innerMoney := m.money
