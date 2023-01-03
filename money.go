@@ -67,7 +67,7 @@ func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
 		CurrencyIso:    nm.Currency().Code,
 		CurrencySymbol: nm.Currency().Grapheme,
 		Label:          nm.Display(),
-		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers        // Default show zero will be true
+		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers
 	}
 	for _, option := range options {
 		option(money)
