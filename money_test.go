@@ -16,7 +16,6 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "TWD", m.CurrencyIso)
 	assert.Equal(t, "NT$", m.CurrencySymbol)
 	assert.Equal(t, "NT$100", m.Label)
-	assert.Equal(t, true, m.showZero)
 }
 
 func TestFromAmount(t *testing.T) {
@@ -51,20 +50,9 @@ func TestSetRoundingMode(t *testing.T) {
 	assert.Equal(t, RoundDown, m.roundingMode)
 }
 
-func TestSetShowZero(t *testing.T) {
-	m := New(100, "TWD", WithShowZero(true))
-	m.SetShowZero(false)
-	assert.Equal(t, false, m.showZero)
-}
-
 func TestGetRoundingMode(t *testing.T) {
 	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, RoundUp, m.GetRoundingMode())
-}
-
-func TestGetShowZero(t *testing.T) {
-	m := New(100, "TWD", WithRoundingMode(RoundUp), WithShowZero(false))
-	assert.Equal(t, false, m.GetShowZero())
 }
 
 func TestInitMoney(t *testing.T) {
@@ -310,12 +298,14 @@ func TestDisplay_WithShowZero(t *testing.T) {
 		},
 	}
 	for _, item := range testTable {
-		m1 := New(item.cents, item.currency, WithRoundingMode(RoundDown))
-		m2 := New(item.cents, item.currency, WithRoundingMode(RoundDown), WithShowZero(false))
-		nm1 := m1.Display()
-		nm2 := m2.Display()
+		m := New(item.cents, item.currency, WithRoundingMode(RoundDown))
+
+		nm1 := m.Display()
+		nm2 := m.Display(func(opts *DisplayOptions) { opts.ShowZero = false })
+		nm3 := m.Display(func(opts *DisplayOptions) { opts.ShowZero = true })
 		assert.Equal(t, item.expected_showZero_true, nm1, item.currency)
 		assert.Equal(t, item.expected_showZero_false, nm2, item.currency)
+		assert.Equal(t, item.expected_showZero_true, nm3, item.currency)
 	}
 }
 
@@ -738,14 +728,6 @@ func TestAdd_DifferentCurrencies(t *testing.T) {
 	assert.Equal(t, "currencies don't match", err.Error())
 }
 
-func TestAdd_DifferentShowZero(t *testing.T) {
-	m1 := New(0, "USD", WithRoundingMode(RoundDown), WithShowZero(false))
-	m2 := New(0, "USD", WithRoundingMode(RoundDown), WithShowZero(true))
-	nm, err := m1.Add(m2)
-	assert.NoError(t, err)
-	assert.Equal(t, false, nm.GetShowZero())
-}
-
 func TestSubtract_SingleValue(t *testing.T) {
 	testTable := []struct {
 		cents1   int64
@@ -820,14 +802,6 @@ func TestSubtract_DifferentCurrencies(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, nm)
 	assert.Equal(t, "currencies don't match", err.Error())
-}
-
-func TestSubtract_DifferentShowZero(t *testing.T) {
-	m1 := New(0, "USD", WithRoundingMode(RoundDown), WithShowZero(false))
-	m2 := New(0, "USD", WithRoundingMode(RoundDown), WithShowZero(true))
-	nm, err := m1.Subtract(m2)
-	assert.NoError(t, err)
-	assert.Equal(t, false, nm.GetShowZero())
 }
 
 func TestMultiply(t *testing.T) {

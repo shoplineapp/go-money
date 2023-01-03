@@ -27,8 +27,11 @@ type Money struct {
 	Dollars        float64 `json:"dollars" bson:"dollars"`
 
 	roundingMode string
-	showZero     bool
 	money        *gomoney.Money
+}
+
+type DisplayOptions struct {
+	ShowZero bool
 }
 
 type MoneyOption func(*Money)
@@ -39,11 +42,7 @@ func WithRoundingMode(mode string) MoneyOption {
 	}
 }
 
-func WithShowZero(show bool) MoneyOption {
-	return func(m *Money) {
-		m.showZero = show
-	}
-}
+type DisplayOption func(*DisplayOptions)
 
 func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 	nm := gomoney.New(cents, isoCode)
@@ -68,8 +67,7 @@ func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
 		CurrencyIso:    nm.Currency().Code,
 		CurrencySymbol: nm.Currency().Grapheme,
 		Label:          nm.Display(),
-		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers
-		showZero:       true,         // Default show zero will be true
+		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers        // Default show zero will be true
 	}
 	for _, option := range options {
 		option(money)
@@ -82,19 +80,9 @@ func (m *Money) SetRoundingMode(mode string) {
 	m.roundingMode = mode
 }
 
-// Setting the showZero of the money object
-func (m *Money) SetShowZero(showZero bool) {
-	m.showZero = showZero
-}
-
 // Getting the roundingMode of the money object
 func (m *Money) GetRoundingMode() string {
 	return m.roundingMode
-}
-
-// Getting the showZero of the money object
-func (m *Money) GetShowZero() bool {
-	return m.showZero
 }
 
 func (m *Money) initMoney() {
@@ -140,8 +128,14 @@ func roundCentsWithExplicitMode(cents float64, mode string) float64 {
 	}
 }
 
-func (m *Money) Display() string {
-	if m.money.IsZero() && !m.showZero {
+func (m *Money) Display(overrides ...DisplayOption) string {
+	opts := &DisplayOptions{
+		ShowZero: true,
+	}
+	for _, override := range overrides {
+		override(opts)
+	}
+	if m.money.IsZero() && !opts.ShowZero {
 		return ""
 	}
 	return m.money.Display()
@@ -211,7 +205,6 @@ func (m *Money) Absolute() *Money {
 		CurrencySymbol: m.CurrencySymbol,
 		Label:          nm.Display(),
 		roundingMode:   m.roundingMode,
-		showZero:       m.showZero,
 	}
 }
 
@@ -226,7 +219,6 @@ func (m *Money) Negative() *Money {
 		CurrencySymbol: m.CurrencySymbol,
 		Label:          nm.Display(),
 		roundingMode:   m.roundingMode,
-		showZero:       m.showZero,
 	}
 }
 
@@ -244,7 +236,7 @@ func (m *Money) Add(oms ...*Money) (*Money, error) {
 			return nil, err
 		}
 	}
-	return New(innerMoney.Amount(), m.CurrencyIso, alignRoundingMode(m, oms), WithShowZero(m.showZero)), nil
+	return New(innerMoney.Amount(), m.CurrencyIso, alignRoundingMode(m, oms)), nil
 
 }
 
@@ -262,7 +254,7 @@ func (m *Money) Subtract(oms ...*Money) (*Money, error) {
 			return nil, err
 		}
 	}
-	return New(innerMoney.Amount(), m.CurrencyIso, alignRoundingMode(m, oms), WithShowZero(m.showZero)), nil
+	return New(innerMoney.Amount(), m.CurrencyIso, alignRoundingMode(m, oms)), nil
 }
 
 // Multiply returns new Money struct with value representing Self multiplied value by multiplier. And If no rounding mode is setted, banker rounding mode is used
@@ -281,7 +273,6 @@ func (m *Money) Multiply(mul float64) *Money {
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
 		roundingMode:   m.roundingMode,
-		showZero:       m.showZero,
 	}
 }
 
@@ -304,6 +295,5 @@ func (m *Money) Divide(div float64) (*Money, error) {
 		CurrencyIso:    m.CurrencyIso,
 		CurrencySymbol: m.CurrencySymbol,
 		roundingMode:   m.roundingMode,
-		showZero:       m.showZero,
 	}, nil
 }
