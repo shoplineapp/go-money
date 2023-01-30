@@ -11,6 +11,7 @@ import (
 const (
 	RoundUp      = "ROUND_UP"
 	RoundDown    = "ROUND_DOWN"
+	RoundHalfUp  = "ROUND_HALF_UP"
 	RoundBankers = "ROUND_BANKERS"
 )
 
@@ -26,8 +27,9 @@ type Money struct {
 	Label          string  `json:"label" bson:"label"`
 	Dollars        float64 `json:"dollars" bson:"dollars"`
 
-	roundingMode string
-	money        *gomoney.Money
+	roundingMode         string
+	smallestDenomination int32
+	money                *gomoney.Money
 }
 
 type DisplayOptions struct {
@@ -39,6 +41,12 @@ type MoneyOption func(*Money)
 func WithRoundingMode(mode string) MoneyOption {
 	return func(m *Money) {
 		m.roundingMode = mode
+	}
+}
+
+func WithSmallestDenomination(smallestDenomination int32) MoneyOption {
+	return func(money *Money) {
+		money.smallestDenomination = smallestDenomination
 	}
 }
 
@@ -85,6 +93,14 @@ func (m *Money) GetRoundingMode() string {
 	return m.roundingMode
 }
 
+func (m *Money) SetSmallestDenomination(smallestDenomination int32) {
+	m.smallestDenomination = smallestDenomination
+}
+
+func (m *Money) GetSmallestDenomination() int32 {
+	return m.smallestDenomination
+}
+
 func (m *Money) initMoney() {
 	if m.money == nil {
 		m.money = gomoney.New(m.Cents, m.CurrencyIso)
@@ -107,12 +123,17 @@ func alignRoundingMode(m *Money, ma []*Money) MoneyOption {
 
 // Round money with rounding mode set
 func (m *Money) Round(value float64) float64 {
-	return roundCentsWithExplicitMode(value, m.roundingMode)
+	smallestDenomination := 1.0
+	if m.smallestDenomination != 0 {
+		smallestDenomination = float64(m.smallestDenomination)
+	}
+	value = value / smallestDenomination
+	return roundCentsWithExplicitMode(value, m.roundingMode) * smallestDenomination
 }
 
 // DEPRECATED: Use Round instead. There is no option not to round by mode
 func (m *Money) RoundByMode(value float64) float64 {
-	return roundCentsWithExplicitMode(value, m.roundingMode)
+	return m.Round(value)
 }
 
 func roundCentsWithExplicitMode(cents float64, mode string) float64 {
@@ -121,6 +142,8 @@ func roundCentsWithExplicitMode(cents float64, mode string) float64 {
 		return math.Ceil(cents)
 	case RoundDown:
 		return math.Floor(cents)
+	case RoundHalfUp:
+		return math.Round(cents)
 	case RoundBankers:
 		return math.RoundToEven(cents)
 	default:
