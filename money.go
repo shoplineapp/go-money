@@ -69,13 +69,14 @@ func NewFromAmount(dollars float64, isoCode string, options ...MoneyOption) *Mon
 
 func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
 	money := &Money{
-		money:          nm,
-		Cents:          nm.Amount(),
-		Dollars:        nm.AsMajorUnits(),
-		CurrencyIso:    nm.Currency().Code,
-		CurrencySymbol: nm.Currency().Grapheme,
-		Label:          nm.Display(),
-		roundingMode:   RoundBankers, // Default Round Mode will be RoundBankers
+		money:                nm,
+		Cents:                nm.Amount(),
+		Dollars:              nm.AsMajorUnits(),
+		CurrencyIso:          nm.Currency().Code,
+		CurrencySymbol:       nm.Currency().Grapheme,
+		Label:                nm.Display(),
+		roundingMode:         RoundBankers, // Default Round Mode will be RoundBankers
+		smallestDenomination: 1,
 	}
 	for _, option := range options {
 		option(money)
