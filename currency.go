@@ -5,7 +5,7 @@ import (
 )
 
 type Currency struct {
-	internalCurrency     *gomoney.Currency
+	*gomoney.Currency
 	smallestDenomination int32
 }
 
@@ -13,7 +13,7 @@ var currencies = map[string]*Currency{}
 
 func setCurrency(currencies map[string]*Currency, currency *gomoney.Currency, smallestDenomination int32) {
 	currencies[currency.Code] = &Currency{
-		internalCurrency:     currency,
+		Currency:             currency,
 		smallestDenomination: smallestDenomination,
 	}
 }
