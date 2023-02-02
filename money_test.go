@@ -1,7 +1,6 @@
 package money
 
 import (
-	"math"
 	"testing"
 
 	"github.com/samber/lo"
@@ -103,79 +102,6 @@ func TestAlignRoundingMode(t *testing.T) {
 		assert.Equal(t, item.expected, result.GetRoundingMode())
 	}
 
-}
-
-func TestRoundByMode(t *testing.T) {
-	testTable := []struct {
-		roundingMode string
-		inputValue   float64
-		expected     float64
-	}{
-		{
-			roundingMode: RoundUp,
-			inputValue:   1.5,
-			expected:     math.Ceil(1.5),
-		},
-		{
-			roundingMode: RoundUp,
-			inputValue:   1.4,
-			expected:     math.Ceil(1.4),
-		},
-		{
-			roundingMode: RoundDown,
-			inputValue:   1.5,
-			expected:     math.Floor(1.5),
-		},
-		{
-			roundingMode: RoundDown,
-			inputValue:   1.4,
-			expected:     math.Floor(1.4),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   1.5,
-			expected:     math.RoundToEven(1.5),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   1.4,
-			expected:     math.RoundToEven(1.4),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   2.5,
-			expected:     math.RoundToEven(2.5),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   2.4,
-			expected:     math.RoundToEven(2.4),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   1.5,
-			expected:     math.RoundToEven(1.5),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   1.4,
-			expected:     math.RoundToEven(1.4),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   2.5,
-			expected:     math.RoundToEven(2.5),
-		},
-		{
-			roundingMode: RoundBankers,
-			inputValue:   2.4,
-			expected:     math.RoundToEven(2.4),
-		},
-	}
-	for _, item := range testTable {
-		rd := New(1, "TWD", WithRoundingMode(item.roundingMode))
-		assert.Equal(t, item.expected, rd.RoundByMode(item.inputValue))
-	}
 }
 
 func TestRoundByModeAndSmallestDenomination(t *testing.T) {

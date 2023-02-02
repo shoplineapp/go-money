@@ -148,11 +148,6 @@ func (m *Money) Round(value float64) float64 {
 	return roundCentsWithExplicitMode(value, m.roundingMode) * smallestDenomination
 }
 
-// DEPRECATED: Use Round instead. There is no option not to round by mode
-func (m *Money) RoundByMode(value float64) float64 {
-	return m.Round(value)
-}
-
 func roundCentsWithExplicitMode(cents float64, mode string) float64 {
 	switch mode {
 	case RoundUp:
@@ -288,7 +283,7 @@ func (m *Money) Multiply(mul float64) *Money {
 
 	cents := m.money.Amount()
 	newCents := float64(cents) * mul
-	round := m.RoundByMode(newCents)
+	round := m.Round(newCents)
 	return New(int64(round), m.CurrencyIso, WithRoundingMode(m.roundingMode), WithSmallestDenomination(m.smallestDenomination))
 }
 
@@ -301,7 +296,7 @@ func (m *Money) Divide(div float64) (*Money, error) {
 
 	cents := m.money.Amount()
 	newCents := float64(cents) / div
-	round := m.RoundByMode(newCents)
+	round := m.Round(newCents)
 	return New(int64(round), m.CurrencyIso, WithRoundingMode(m.roundingMode), WithSmallestDenomination(m.smallestDenomination)), nil
 }
 
