@@ -76,7 +76,7 @@ func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
 		CurrencySymbol:       nm.Currency().Grapheme,
 		Label:                nm.Display(),
 		roundingMode:         RoundBankers, // Default Round Mode will be RoundBankers
-		smallestDenomination: 1,
+		smallestDenomination: getCurrency(nm.Currency().Code).smallestDenomination,
 	}
 	for _, option := range options {
 		option(money)
@@ -132,12 +132,12 @@ func alignSmallestDenomination(m *Money, ma []*Money) MoneyOption {
 	if isFound {
 		return WithSmallestDenomination(fm.smallestDenomination)
 	}
-	return WithSmallestDenomination(1)
+	return WithSmallestDenomination(getCurrency(m.CurrencyIso).smallestDenomination)
 }
 
 // Round money with rounding mode set
 func (m *Money) Round(value float64) float64 {
-	smallestDenomination := 1.0
+	smallestDenomination := float64(getCurrency(m.CurrencyIso).smallestDenomination)
 	if m.smallestDenomination != 0 {
 		smallestDenomination = float64(m.smallestDenomination)
 	}
