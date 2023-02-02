@@ -29,6 +29,7 @@ type Money struct {
 
 	roundingMode         string
 	smallestDenomination int32
+	currency             *Currency
 	money                *gomoney.Money
 }
 
@@ -58,7 +59,7 @@ func New(cents int64, isoCode string, options ...MoneyOption) *Money {
 }
 
 func NewFromAmount(dollars float64, isoCode string, options ...MoneyOption) *Money {
-	currencyDecimals := math.Pow10(gomoney.GetCurrency(isoCode).Fraction)
+	currencyDecimals := math.Pow10(getCurrency(isoCode).Fraction)
 	cents := dollars * currencyDecimals
 
 	// Temp money object without value
@@ -68,15 +69,17 @@ func NewFromAmount(dollars float64, isoCode string, options ...MoneyOption) *Mon
 }
 
 func newFromGoMoney(nm *gomoney.Money, options ...MoneyOption) *Money {
+	currency := getCurrency(nm.Currency().Code)
 	money := &Money{
 		money:                nm,
 		Cents:                nm.Amount(),
 		Dollars:              nm.AsMajorUnits(),
-		CurrencyIso:          nm.Currency().Code,
-		CurrencySymbol:       nm.Currency().Grapheme,
+		CurrencyIso:          currency.Code,
+		CurrencySymbol:       currency.Grapheme,
 		Label:                nm.Display(),
 		roundingMode:         RoundBankers, // Default Round Mode will be RoundBankers
-		smallestDenomination: 1,
+		smallestDenomination: currency.smallestDenomination,
+		currency:             currency,
 	}
 	for _, option := range options {
 		option(money)
@@ -132,12 +135,12 @@ func alignSmallestDenomination(m *Money, ma []*Money) MoneyOption {
 	if isFound {
 		return WithSmallestDenomination(fm.smallestDenomination)
 	}
-	return WithSmallestDenomination(1)
+	return WithSmallestDenomination(m.GetCurrency().smallestDenomination)
 }
 
 // Round money with rounding mode set
 func (m *Money) Round(value float64) float64 {
-	smallestDenomination := 1.0
+	smallestDenomination := float64(m.GetCurrency().smallestDenomination)
 	if m.smallestDenomination != 0 {
 		smallestDenomination = float64(m.smallestDenomination)
 	}
@@ -337,4 +340,11 @@ func (m *Money) Divide(div float64) (*Money, error) {
 		roundingMode:         m.roundingMode,
 		smallestDenomination: m.smallestDenomination,
 	}, nil
+}
+
+func (m *Money) GetCurrency() *Currency {
+	if m.currency == nil {
+		return getCurrency(m.CurrencyIso)
+	}
+	return m.currency
 }
