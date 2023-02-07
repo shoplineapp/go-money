@@ -140,9 +140,9 @@ func alignSmallestDenomination(m *Money, ma []*Money) MoneyOption {
 
 // Round money with rounding mode set
 func (m *Money) Round(value float64) float64 {
-	smallestDenomination := float64(m.GetCurrency().smallestDenomination)
-	if m.smallestDenomination != 0 {
-		smallestDenomination = float64(m.smallestDenomination)
+	smallestDenomination := float64(m.smallestDenomination)
+	if smallestDenomination == 0.0 {
+		smallestDenomination = float64(m.GetCurrency().smallestDenomination)
 	}
 	value = value / smallestDenomination
 	return roundCentsWithExplicitMode(value, m.roundingMode) * smallestDenomination
