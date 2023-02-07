@@ -1,7 +1,6 @@
 package money
 
 import (
-	"math"
 	"testing"
 
 	"github.com/samber/lo"
@@ -50,9 +49,20 @@ func TestSetRoundingMode(t *testing.T) {
 	assert.Equal(t, RoundDown, m.roundingMode)
 }
 
+func TestSetSmallestDenomination(t *testing.T) {
+	m := New(100, "TWD", WithSmallestDenomination(10))
+	m.SetSmallestDenomination(100)
+	assert.Equal(t, int32(100), m.smallestDenomination)
+}
+
 func TestGetRoundingMode(t *testing.T) {
 	m := New(100, "TWD", WithRoundingMode(RoundUp))
 	assert.Equal(t, RoundUp, m.GetRoundingMode())
+}
+
+func TestGetSmallestDenomination(t *testing.T) {
+	m := New(100, "TWD", WithSmallestDenomination(10))
+	assert.Equal(t, int32(10), m.GetSmallestDenomination())
 }
 
 func TestInitMoney(t *testing.T) {
@@ -94,78 +104,103 @@ func TestAlignRoundingMode(t *testing.T) {
 
 }
 
-func TestRoundByMode(t *testing.T) {
+func TestRoundByModeAndSmallestDenomination(t *testing.T) {
 	testTable := []struct {
-		roundingMode string
-		inputValue   float64
-		expected     float64
+		roundingMode         string
+		smallestDenomination int32
+		inputValue           float64
+		expected             float64
 	}{
 		{
-			roundingMode: RoundUp,
-			inputValue:   1.5,
-			expected:     math.Ceil(1.5),
+			roundingMode:         RoundUp,
+			inputValue:           104,
+			smallestDenomination: 10,
+			expected:             110,
 		},
 		{
-			roundingMode: RoundUp,
-			inputValue:   1.4,
-			expected:     math.Ceil(1.4),
+			roundingMode:         RoundUp,
+			inputValue:           105,
+			smallestDenomination: 10,
+			expected:             110,
 		},
 		{
-			roundingMode: RoundDown,
-			inputValue:   1.5,
-			expected:     math.Floor(1.5),
+			roundingMode:         RoundUp,
+			inputValue:           106,
+			smallestDenomination: 10,
+			expected:             110,
 		},
 		{
-			roundingMode: RoundDown,
-			inputValue:   1.4,
-			expected:     math.Floor(1.4),
+			roundingMode:         RoundDown,
+			inputValue:           104,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   1.5,
-			expected:     math.RoundToEven(1.5),
+			roundingMode:         RoundDown,
+			inputValue:           105,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   1.4,
-			expected:     math.RoundToEven(1.4),
+			roundingMode:         RoundDown,
+			inputValue:           106,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   2.5,
-			expected:     math.RoundToEven(2.5),
+			roundingMode:         RoundHalfUp,
+			inputValue:           104,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   2.4,
-			expected:     math.RoundToEven(2.4),
+			roundingMode:         RoundHalfUp,
+			inputValue:           105,
+			smallestDenomination: 10,
+			expected:             110,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   1.5,
-			expected:     math.RoundToEven(1.5),
+			roundingMode:         RoundHalfUp,
+			inputValue:           106,
+			smallestDenomination: 10,
+			expected:             110,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   1.4,
-			expected:     math.RoundToEven(1.4),
+			roundingMode:         RoundDown,
+			inputValue:           106,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   2.5,
-			expected:     math.RoundToEven(2.5),
+			roundingMode:         RoundBankers,
+			inputValue:           104,
+			smallestDenomination: 10,
+			expected:             100,
 		},
 		{
-			roundingMode: RoundBankers,
-			inputValue:   2.4,
-			expected:     math.RoundToEven(2.4),
+			roundingMode:         RoundBankers,
+			inputValue:           105,
+			smallestDenomination: 10,
+			expected:             100,
 		},
-	}
-	for _, item := range testTable {
-		rd := New(1, "TWD", WithRoundingMode(item.roundingMode))
-		assert.Equal(t, item.expected, rd.RoundByMode(item.inputValue))
+		{
+			roundingMode:         RoundBankers,
+			inputValue:           115,
+			smallestDenomination: 10,
+			expected:             120,
+		},
+		{
+			roundingMode:         RoundBankers,
+			inputValue:           106,
+			smallestDenomination: 10,
+			expected:             110,
+		},
 	}
 
+	for _, item := range testTable {
+		rd := New(0, "HKD", WithRoundingMode(item.roundingMode), WithSmallestDenomination(item.smallestDenomination))
+		assert.Equal(t, item.expected, rd.Round(item.inputValue))
+	}
 }
 
 func TestDisplay(t *testing.T) {
