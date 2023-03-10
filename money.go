@@ -306,3 +306,23 @@ func (m *Money) GetCurrency() *Currency {
 	}
 	return m.currency
 }
+
+func (m *Money) GetCents() int64 {
+	return m.Cents
+}
+
+func (m *Money) GetCurrencySymbol() string {
+	return m.CurrencySymbol
+}
+
+func (m *Money) GetCurrencyIso() string {
+	return m.CurrencyIso
+}
+
+func (m *Money) GetLabel() string {
+	return m.Label
+}
+
+func (m *Money) GetDollars() float64 {
+	return m.Dollars
+}
