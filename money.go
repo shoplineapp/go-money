@@ -229,6 +229,10 @@ func (m *Money) IsNegative() bool {
 	return m.money.IsNegative()
 }
 
+func (m *Money) IsNil() bool {
+	return m == nil
+}
+
 // Absolute returns new Money struct from given Money using absolute monetary value.
 func (m *Money) Absolute() *Money {
 	m.initMoney()
