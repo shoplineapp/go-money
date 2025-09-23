@@ -43,7 +43,7 @@ func init() {
 	setCurrency(currencies, gomoney.AddCurrency("MYR", "RM", "$1", ".", ",", 2), 1)
 	setCurrency(currencies, gomoney.AddCurrency("THB", "\u0e3f", "1 $", ".", ",", 2), 1)
 	setCurrency(currencies, gomoney.AddCurrency("AED", "DH", "1$", ".", ",", 2), 1) //\u062f.\u0625
-	setCurrency(currencies, gomoney.AddCurrency("JPY", "円", "$1", ".", ",", 0), 1)  // \u00a5
+	setCurrency(currencies, gomoney.AddCurrency("JPY", "円", "1$", ".", ",", 0), 1)  // \u00a5
 	setCurrency(currencies, gomoney.AddCurrency("MMK", "K", "$1", ".", ",", 2), 1)
 	setCurrency(currencies, gomoney.AddCurrency("BND", "B$", "$1", ".", ",", 2), 1)
 	setCurrency(currencies, gomoney.AddCurrency("KRW", "\u20a9", "$1", ".", ",", 0), 1)
